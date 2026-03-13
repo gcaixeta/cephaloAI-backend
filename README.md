@@ -183,20 +183,17 @@ Download the annotated image (PNG) with landmark overlays drawn on it.
 
 ---
 
-### `POST /diagnostico` *(Diagnosis Service)*
+## Model Weights
 
-Generate an AI-assisted pre-diagnosis from cephalometric measurements.
+The trained model checkpoint is **not tracked by git** and must be placed manually before running the API:
 
-**Request:** `application/json` — the `angles` object from `/processar-imagem`
-
-**Response:** `application/json`
-
-```json
-{
-  "diagnostico": "Summary of the cephalometric pre-diagnosis",
-  "recomendacoes": ["Recommendation 1", "Recommendation 2", "Recommendation 3", "Recommendation 4"]
-}
 ```
+api/
+└── models/
+    └── Best_Model400it.pt   ← place the checkpoint here
+```
+
+The file is loaded at startup in `app.py` via `ImagemService("models/Best_Model400it.pt")`. If the file is missing, the server will fail to start.
 
 ---
 
