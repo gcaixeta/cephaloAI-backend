@@ -3,3 +3,5 @@ venv/
 models/
 __pycache__/
 *.jpg
+*.bmp
+mise.toml
