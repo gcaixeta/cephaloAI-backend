@@ -60,8 +60,6 @@ The neural network was trained on a dataset of lateral cephalometric radiographs
 |---|---|
 | ML Model | PyTorch 2.8, VGG19-BN (ImageNet), custom DilationInceptionModule |
 | API | Python 3.11, Flask 3.1, OpenCV, scikit-image |
-| Frontend | React 19, TypeScript 5.8, Vite 7, Tailwind CSS 4, Radix UI |
-| Diagnosis | Node.js, Express, Google Gemini 2.5 Flash (`@google/genai`) |
 
 ---
 
@@ -107,37 +105,14 @@ Each measurement is classified into **Class 1** (normal), **Class 2**, **Class 3
 ### Prerequisites
 
 - Python 3.11 ([mise](https://mise.jdx.dev/) recommended)
-- Node.js 18+
 - NVIDIA GPU with CUDA (recommended; CPU fallback is supported)
-- Google API key (for the diagnosis service)
-- Model weights: `api/models/Best_Model400it.pt` (not tracked by git — obtain separately)
+- Model weights: `models/Best_Model400it.pt` (not tracked by git — obtain separately)
 
 ### Installation & Running
 
-**1. Flask API (port 5000)**
-
 ```bash
-cd api/
 pip install -r requirements.txt
-python app.py
-```
-
-**2. React Frontend (port 5173)**
-
-```bash
-cd frontent/
-npm install
-npm run dev
-```
-
-**3. Diagnosis Service (port 3001)**
-
-```bash
-cd diagnosis/
-npm install
-# Create a .env file with:
-# GOOGLE_API_KEY=your_api_key_here
-node server.js
+python app.py   # http://localhost:5000
 ```
 
 ---

@@ -13,8 +13,8 @@ class ImagemService:
     def __init__(self, checkpoint_path, device="cuda"):
         self.device = torch.device(device if torch.cuda.is_available() else "cpu")
 
-        # Crie o modelo e o config (ajuste conforme seu config real)
-        # Exemplo de config mínimo:
+        # Create the model and config (adjust to match your actual config)
+        # Minimal config example:
         class Config:
             landmarkNum = 19
             batchSize = 1
@@ -61,7 +61,7 @@ class ImagemService:
 def desenhar_pontos(img_path, coords, output_path):
     img = cv2.imread(img_path)
     if img is None:
-        raise ValueError("Não foi possível carregar a imagem!")
+        raise ValueError("Could not load the image!")
 
     h, w = img.shape[:2]
 
