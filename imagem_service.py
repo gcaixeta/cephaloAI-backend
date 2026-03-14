@@ -58,8 +58,7 @@ class ImagemService:
         return coords_list, angles
 
 
-def desenhar_pontos(img_path, coords):
-    saida_path = img_path.split("_", 1)[1]
+def desenhar_pontos(img_path, coords, output_path):
     img = cv2.imread(img_path)
     if img is None:
         raise ValueError("Não foi possível carregar a imagem!")
@@ -71,5 +70,5 @@ def desenhar_pontos(img_path, coords):
         y = int(x_norm * h)
         cv2.circle(img, (x, y), radius=15, color=(0, 0, 255), thickness=-1)
 
-    cv2.imwrite(saida_path, img)
-    return saida_path
+    cv2.imwrite(output_path, img)
+    return output_path
