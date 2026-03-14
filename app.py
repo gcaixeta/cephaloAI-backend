@@ -14,11 +14,11 @@ CORS(app)
 WORK_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-@app.route("/processar-imagem", methods=["POST"])
+@app.route("/process-image", methods=["POST"])
 @cross_origin()
 def processar() -> Response:
     if "file" not in request.files:
-        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+        return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
     img_temp_path = os.path.join(WORK_DIR, f"temp_{uuid.uuid4().hex}.png")
@@ -44,12 +44,12 @@ def processar() -> Response:
             os.remove(img_temp_path)
 
 
-@app.route("/download-imagem/<filename>")
+@app.route("/download-image/<filename>")
 def download_imagem(filename):
     safe_name = os.path.basename(filename)
     safe_path = os.path.join(WORK_DIR, safe_name)
     if not os.path.exists(safe_path):
-        return jsonify({"error": "Arquivo não encontrado"}), 404
+        return jsonify({"error": "File not found"}), 404
     return send_file(safe_path, mimetype="image/png", as_attachment=True)
 
 
