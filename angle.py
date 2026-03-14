@@ -1,6 +1,42 @@
-import sys
 import math
 import numpy as np
+
+# Landmark indices — verify against dataset documentation
+SELLA = 0        # S
+NASION = 1       # N
+ANS = 2          # Anterior Nasal Spine
+PNS = 3          # Posterior Nasal Spine
+A_POINT = 4      # A (Subspinale)
+B_POINT = 5      # B (Supramentale)
+POGONION = 6     # Pg
+MENTON = 7       # Me
+GONION_ANT = 8   # Gonion (mandibular plane anterior reference)
+GONION = 9       # Go
+U1_TIP = 10      # Upper incisor tip (MW)
+L1_TIP = 11      # Lower incisor tip (MW)
+# indices 12–15 not used in current measurements
+FH_ANT = 16      # Frankfort Horizontal anterior reference
+FH_POST = 17     # Frankfort Horizontal posterior reference
+
+# Classification thresholds (clinical reference ranges; normal = class "1")
+THRESHOLDS = {
+    "ANB":  {"low": 3.2,  "high": 5.7,  "below": "3", "above": "2"},
+    "SNB":  {"low": 74.6, "high": 78.7, "below": "2", "above": "3"},
+    "SNA":  {"low": 79.4, "high": 83.2, "below": "3", "above": "2"},
+    "ODI":  {"low": 68.4, "high": 80.5, "below": "3", "above": "2"},
+    "APDI": {"low": 77.6, "high": 85.2, "below": "2", "above": "3"},
+    "FHI":  {"low": 0.65, "high": 0.75, "below": "3", "above": "2"},
+    "FMA":  {"low": 26.8, "high": 31.4, "below": "3", "above": "2"},
+}
+
+
+def _classify(value, key):
+    t = THRESHOLDS[key]
+    if value < t["low"]:
+        return t["below"]
+    elif value > t["high"]:
+        return t["above"]
+    return "1"
 
 
 class Point:
@@ -14,7 +50,6 @@ class Point:
 
 class Vector:
     def __init__(self, pa: Point, pb: Point):
-        # diferença em float, não converte para int (evita vetor nulo)
         self.x = float(pb.x) - float(pa.x)
         self.y = float(pb.y) - float(pa.y)
 
@@ -34,14 +69,11 @@ class Angle:
         norm_a = self.va.norm()
         norm_b = self.vb.norm()
 
-        # evita divisão por zero (vetor nulo)
         if norm_a == 0 or norm_b == 0:
-            return 0.0  # ou float("nan") se quiser marcar inválido
+            return 0.0
 
         dot = self.va.x * self.vb.x + self.va.y * self.vb.y
         cos_theta = dot / (norm_a * norm_b)
-
-        # segurança contra erros numéricos (cos em [-1,1])
         cos_theta = max(-1.0, min(1.0, cos_theta))
 
         return math.degrees(math.acos(cos_theta))
@@ -55,24 +87,6 @@ class Distance:
 
     def dist(self):
         return self.value
-
-
-def checkArg():
-    if len(sys.argv) != 2:
-        print("please give me file")
-        sys.exit(0)
-
-
-def readFile(filename):
-    points = []
-    f = open(filename, "r")
-    for line in f.readlines():
-        line = line.strip(" \t\n\r")
-        x = line.split(",")[0]
-        y = line.split(",")[1]
-        points.append(Point(x, y))
-    f.close()
-    return points
 
 
 def getCross(va, vb):
@@ -117,141 +131,73 @@ def getAPDI(pa, pb, pc, pd, pe, pf, pg, ph, pi, pj):
     return aa + ab + ac
 
 
-def writeFile(
-    filename,
-    points,
-    ANBtype,
-    SNBtype,
-    SNAtype,
-    ODItype,
-    APDItype,
-    FHItype,
-    FMAtype,
-    mwtype,
-):
-    f = open(filename, "w")
-    for point in points:
-        f.write(str(point) + "\n")
-    f.write(ANBtype + "\n")
-    f.write(SNBtype + "\n")
-    f.write(SNAtype + "\n")
-    f.write(ODItype + "\n")
-    f.write(APDItype + "\n")
-    f.write(FHItype + "\n")
-    f.write(FMAtype + "\n")
-    f.write(mwtype + "\n")
-    f.close()
-
-
 def classification(points):
     results = {}
 
     # --- ANB ---
-    va = Vector(points[1], points[0])
-    vb = Vector(points[1], points[5])
-    vc = Vector(points[1], points[0])
-    vd = Vector(points[1], points[4])
+    va = Vector(points[NASION], points[SELLA])
+    vb = Vector(points[NASION], points[B_POINT])
+    vc = Vector(points[NASION], points[SELLA])
+    vd = Vector(points[NASION], points[A_POINT])
 
     ANB = Angle(vc, vd).theta() - Angle(va, vb).theta()
-    if ANB < 3.2:
-        ANBtype = "3"
-    elif ANB > 5.7:
-        ANBtype = "2"
-    else:
-        ANBtype = "1"
-    results["ANB"] = {"value": ANB, "class": ANBtype}
+    results["ANB"] = {"value": ANB, "class": _classify(ANB, "ANB")}
 
     # --- SNB ---
-    va = Vector(points[1], points[0])
-    vb = Vector(points[1], points[5])
+    va = Vector(points[NASION], points[SELLA])
+    vb = Vector(points[NASION], points[B_POINT])
     SNB = Angle(va, vb).theta()
-    if SNB < 74.6:
-        SNBtype = "2"
-    elif SNB > 78.7:
-        SNBtype = "3"
-    else:
-        SNBtype = "1"
-    results["SNB"] = {"value": SNB, "class": SNBtype}
+    results["SNB"] = {"value": SNB, "class": _classify(SNB, "SNB")}
 
     # --- SNA ---
-    va = Vector(points[1], points[0])
-    vb = Vector(points[1], points[4])
+    va = Vector(points[NASION], points[SELLA])
+    vb = Vector(points[NASION], points[A_POINT])
     SNA = Angle(va, vb).theta()
-    if SNA < 79.4:
-        SNAtype = "3"
-    elif SNA > 83.2:
-        SNAtype = "2"
-    else:
-        SNAtype = "1"
-    results["SNA"] = {"value": SNA, "class": SNAtype}
+    results["SNA"] = {"value": SNA, "class": _classify(SNA, "SNA")}
 
     # --- ODI ---
     ODI = getODI(
-        points[7],
-        points[9],
-        points[5],
-        points[4],
-        points[3],
-        points[2],
-        points[16],
-        points[17],
+        points[MENTON],
+        points[GONION],
+        points[B_POINT],
+        points[A_POINT],
+        points[PNS],
+        points[ANS],
+        points[FH_ANT],
+        points[FH_POST],
     )
-    if ODI < 68.4:
-        ODItype = "3"
-    elif ODI > 80.5:
-        ODItype = "2"
-    else:
-        ODItype = "1"
-    results["ODI"] = {"value": ODI, "class": ODItype}
+    results["ODI"] = {"value": ODI, "class": _classify(ODI, "ODI")}
 
     # --- APDI ---
     APDI = getAPDI(
-        points[2],
-        points[3],
-        points[1],
-        points[6],
-        points[4],
-        points[5],
-        points[3],
-        points[2],
-        points[16],
-        points[17],
+        points[ANS],
+        points[PNS],
+        points[NASION],
+        points[POGONION],
+        points[A_POINT],
+        points[B_POINT],
+        points[PNS],
+        points[ANS],
+        points[FH_ANT],
+        points[FH_POST],
     )
-    if APDI < 77.6:
-        APDItype = "2"
-    elif APDI > 85.2:
-        APDItype = "3"
-    else:
-        APDItype = "1"
-    results["APDI"] = {"value": APDI, "class": APDItype}
+    results["APDI"] = {"value": APDI, "class": _classify(APDI, "APDI")}
 
-    # --- FHI ---
-    pfh = Distance(points[0], points[9]).dist()
-    afh = Distance(points[1], points[7]).dist()
+    # --- FHI (Face Height Index = PFH / AFH) ---
+    pfh = Distance(points[SELLA], points[GONION]).dist()
+    afh = Distance(points[NASION], points[MENTON]).dist()
     ratio = pfh / afh if afh != 0 else 0
-    if ratio < 0.65:
-        FHItype = "3"
-    elif ratio > 0.75:
-        FHItype = "2"
-    else:
-        FHItype = "1"
-    results["FHI"] = {"value": ratio, "class": FHItype}
+    results["FHI"] = {"value": ratio, "class": _classify(ratio, "FHI")}
 
     # --- FMA ---
-    va = Vector(points[0], points[1])
-    vb = Vector(points[9], points[8])
+    va = Vector(points[SELLA], points[NASION])
+    vb = Vector(points[GONION], points[GONION_ANT])
     FMA = Angle(va, vb).theta()
-    if FMA < 26.8:
-        FMAtype = "3"
-    elif FMA > 31.4:
-        FMAtype = "2"
-    else:
-        FMAtype = "1"
-    results["FMA"] = {"value": FMA, "class": FMAtype}
+    results["FMA"] = {"value": FMA, "class": _classify(FMA, "FMA")}
 
-    # --- MW ---
-    mw = Distance(points[10], points[11]).dist() / 10
-    if points[11].x < points[10].x:
+    # --- MW (Maxillary Width) ---
+    mw = Distance(points[U1_TIP], points[L1_TIP]).dist() / 10
+    if points[L1_TIP].x < points[U1_TIP].x:
         mw = -mw
     if mw >= 2:
         if mw <= 4.5:

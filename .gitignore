@@ -1,5 +1,7 @@
 venv/
+.env
 .env/
+**/.env
 models/
 __pycache__/
 *.jpg
